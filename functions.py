@@ -9,8 +9,8 @@ import variables as var
 #=====================
 def initPlayers():
     for i in range(var.playersQuantity):
-        var.listPlayers.append(var.Player("player" + str(i+1), [var.Card(0, ""), var.Card(0, "")], 20*var.minimalBet, True, 0, 0))
-    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet and 0 as the value of the hand
+        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, []))
+    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 1 as the value of the hand and a empty list for the best hand
 
 def getCard():
     while True:
@@ -219,7 +219,7 @@ def showdown():
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
             if var.listPlayers[i].handValue == bestHand:
-                print("player" + str(i+1) + " won!" + " (" + printHand(i) + ")")   
+                print("player" + str(i+1) + " won!" + " (" + printHand(i) + ")")
             else:
                 print("player" + str(i+1) + " lost..." + " (" + printHand(i) + ")")
 
@@ -250,10 +250,17 @@ def sortPossibleCards(possibleCards):
             possibleCards[j+i] = possibleCards[j]
             j -= 1
         possibleCards[j+1] = key
-    # Sorts the 7 possible cards to make the hand [insertion sort]
+
+    for i in range(7):
+        if possibleCards[i] == 1:
+            possibleCards.append(possibleCards[i])
+    
+    return possibleCards
+    # Sorts the 7 possible cards to make the hand (insertion sort)
 
 def calculateHand(player):
     possibleCards = [var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]]
+    possibleCards = sortPossibleCards(possibleCards)
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH
@@ -271,10 +278,11 @@ def calculateHand(player):
         return var.THREEOFAKIND
     elif twoPairs(possibleCards, player):
         return var.TWOPAIRS
-    elif equalNumber(possibleCards, 2, player):
+    elif equalNumber(possibleCards, 2):
+        getPair(possibleCards, player)
         return var.PAIR
     else:
-        getHighCard(player)
+        getHighCard(possibleCards, player)
         return var.HIGHCARD
     # Calculates the value of the player's hand
 
@@ -292,6 +300,27 @@ def isThereCard(number, suit, cards):
     return False
     # Verifies if a card is in a list of cards
 
+def getHighCard(possibleCards, player):
+    for i in range(5):
+        var.listPlayers[player].bestHand[4-i] = possibleCards[len(possibleCards)-1-i]
+    # Get the best hand (high card)
+        
+def getPair(possibleCards, player):
+    for i in range(len(possibleCards)):
+        if possibleCards[i].number == var.lookForCard:
+            var.listPlayers[player].bestHand[0] = possibleCards[i]
+            var.listPlayers[player].bestHand[1] = possibleCards[i+1]
+            break
+
+    counter = 3
+    for i in range(len(possibleCards)):
+        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard:
+            var.listPlayers[player].bestHand[4-i] = possibleCards[len(possibleCards)-1-i]
+            counter -= 1
+            if counter == 0:
+                break
+    # Get the best hand (pair)
+    
 def equalNumber(possibleCards, occurrence):
     equalNumbers = 0
 
@@ -299,8 +328,10 @@ def equalNumber(possibleCards, occurrence):
         for j in range(7):
             if possibleCards[i].number == possibleCards[j].number:
                 equalNumbers += 1
-        if equalNumbers >= occurrence:
-            return True
+
+            if equalNumbers >= occurrence:
+                var.lookForCard = possibleCards[i].number
+                return True
         else:
             equalNumbers = 0
 
