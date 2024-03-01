@@ -16,14 +16,18 @@ def getCard():
     while True:
         equalCard = False
         randomCard = var.Card(var.numbers[random.randrange(0, 13)], var.suits[random.randrange(0, 4)])
+
         for i in range(var.playersQuantity):
             if randomCard.number == var.listPlayers[i].cards[0].number and randomCard.suit == var.listPlayers[i].cards[0].suit:
                 equalCard = True
+
             if randomCard.number == var.listPlayers[i].cards[1].number and randomCard.suit == var.listPlayers[i].cards[1].suit:
                 equalCard = True
+
         for i in range(5):
             if randomCard.number == var.communityCards[i].number and randomCard.suit == var.communityCards[i].suit:
                 equalCard = True
+
         if equalCard == False:
             return randomCard 
     # Generates a random card and verify if it was generated before
@@ -41,6 +45,7 @@ def getCommunityCards():
 
 def emptyCurrentBet():
     var.toPayBet = 0
+
     for i in range(var.playersQuantity):
         var.listPlayers[i].currentBet = 0
     # Makes the current bet of all players be zero
@@ -77,6 +82,7 @@ def showPlayerCards(player):
 #===================
 def nextPlayer(player):
     player += 1
+
     if player >= var.playersQuantity:
         return player - var.playersQuantity
     else:
@@ -85,6 +91,7 @@ def nextPlayer(player):
 
 def previousPlayer(player):
     player -= 1
+
     if player < 0:
         return var.playersQuantity
     else:
@@ -93,17 +100,21 @@ def previousPlayer(player):
 
 def isEndOfRound():
     flag = True
+
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active and var.listPlayers[i].currentBet < var.toPayBet and var.listPlayers[i].cash > 0:
             flag = False
+
     return flag
     # Returns false if it finds a player the still have to bet/pay, and true if that isn't the case
 
 def countActivePlayers():
     activePlayers = 0
+
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
             activePlayers += 1
+
     return activePlayers
 
 #======================================
@@ -173,6 +184,7 @@ def isAllIn(decision):
         var.pot += var.toPayBet - var.listPlayers[var.currentPlayer].currentBet
         var.listPlayers[var.currentPlayer].cash -= var.toPayBet - var.listPlayers[var.currentPlayer].currentBet
         var.listPlayers[var.currentPlayer].currentBet = var.toPayBet
+
         if decision == var.CALL:
             print("Player" + str(var.currentPlayer+1) + " calls")
         elif decision == var.RAISE:
@@ -246,9 +258,11 @@ def sortPossibleCards(possibleCards):
     for i in range(1, 7):
         key = possibleCards[i]
         j = i - 1
+
         while j >= 0 and key.number < possibleCards[j].number:
             possibleCards[j+i] = possibleCards[j]
             j -= 1
+
         possibleCards[j+1] = key
 
     for i in range(7):
@@ -259,8 +273,7 @@ def sortPossibleCards(possibleCards):
     # Sorts the 7 possible cards to make the hand (insertion sort)
 
 def calculateHand(player):
-    possibleCards = [var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]]
-    possibleCards = sortPossibleCards(possibleCards)
+    possibleCards = sortPossibleCards([var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]])
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH
@@ -274,9 +287,11 @@ def calculateHand(player):
         return var.FLUSH
     elif straight(possibleCards, player):
         return var.STRAIGHT
-    elif equalNumber(possibleCards, 3, player):
+    elif equalNumber(possibleCards, 3):
+        getThreeOfAKind(possibleCards, player)
         return var.THREEOFAKIND
-    elif twoPairs(possibleCards, player):
+    elif twoPairs(possibleCards):
+        getTwoPairs(possibleCards, player)
         return var.TWOPAIRS
     elif equalNumber(possibleCards, 2):
         getPair(possibleCards, player)
@@ -290,6 +305,7 @@ def isThereNumber(number, cards):
     for i in range(7):
         if cards[i].number == number:
             return True
+        
     return False
     # Verifies if a number is in a list of cards
 
@@ -297,29 +313,72 @@ def isThereCard(number, suit, cards):
     for i in range(7):
         if cards[i].number == number and cards[i].suit == suit:
             return True
+        
     return False
     # Verifies if a card is in a list of cards
 
 def getHighCard(possibleCards, player):
     for i in range(5):
         var.listPlayers[player].bestHand[4-i] = possibleCards[len(possibleCards)-1-i]
-    # Get the best hand (high card)
+    # Gets the best hand (high card)
         
 def getPair(possibleCards, player):
-    for i in range(len(possibleCards)):
-        if possibleCards[i].number == var.lookForCard:
+    for i in range(7):
+        if possibleCards[i].number == var.lookForCard1:
             var.listPlayers[player].bestHand[0] = possibleCards[i]
             var.listPlayers[player].bestHand[1] = possibleCards[i+1]
             break
 
     counter = 3
+
     for i in range(len(possibleCards)):
-        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard:
-            var.listPlayers[player].bestHand[4-i] = possibleCards[len(possibleCards)-1-i]
+        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
+            var.listPlayers[player].bestHand[2+i] = possibleCards[len(possibleCards)-1-i]
             counter -= 1
+
             if counter == 0:
                 break
-    # Get the best hand (pair)
+    # Gets the best hand (pair)
+            
+def getTwoPairs(possibleCards, player):
+    highPair = max([var.lookForCard1, var.lookForCard2])
+    lowPair = min([var.lookForCard1, var.lookForCard2])
+
+    for i in range(7):
+        if possibleCards[i].number == highPair:
+            var.listPlayers[player].bestHand[0] = possibleCards[i]
+            var.listPlayers[player].bestHand[1] = possibleCards[i+1]
+            break
+
+    for i in range(7):
+        if possibleCards[i].number == lowPair:
+            var.listPlayers[player].bestHand[2] = possibleCards[i]
+            var.listPlayers[player].bestHand[3] = possibleCards[i]
+            break
+
+    for i in range(7):
+        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1 and possibleCards[len(possibleCards)-1-i].number != var.lookForCard2:
+            var.listPlayers[player].bestHand[4] = possibleCards[len(possibleCards)-1-i]
+    # Gets the best hand (two pairs)
+            
+def getThreeOfAKind(possibleCards, player):
+    for i in range(7):
+        if possibleCards[i].number == var.lookForCard1:
+            var.listPlayers[player].bestHand[0] = possibleCards[i]
+            var.listPlayers[player].bestHand[1] = possibleCards[i+1]
+            var.listPlayers[player].bestHand[2] = possibleCards[i+2]
+            break
+
+    counter = 2
+
+    for i in range(len(possibleCards)):
+        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
+            var.listPlayers[player].bestHand[3+i] = possibleCards[len(possibleCards)-1-i]
+            counter -= 1
+
+            if counter == 0:
+                break
+    # Gets the best hand (two pairs)
     
 def equalNumber(possibleCards, occurrence):
     equalNumbers = 0
@@ -330,20 +389,25 @@ def equalNumber(possibleCards, occurrence):
                 equalNumbers += 1
 
             if equalNumbers >= occurrence:
-                var.lookForCard = possibleCards[i].number
+                var.lookForCard1 = possibleCards[i].number
                 return True
-        else:
-            equalNumbers = 0
 
     return False
     # Returns True if the player has cards with the same number, based on the number of desired occurrences
 
 def twoPairs(possibleCards):
     pairs = 0
+    var.lookForCard1 = 0
+    var.lookForCard2 = 0
 
     for i in range(7):
         for j in range(7-i):
             if possibleCards[i].number == possibleCards[6-j].number and possibleCards[i].suit != possibleCards[6-j].suit:
+                if var.lookForCard1 == 0:
+                    var.lookForCard1 = possibleCards[i].number
+                else:
+                    var.lookForCard2 = possibleCards[i].number
+
                 pairs += 1
                 break
 
@@ -363,6 +427,7 @@ def straight(possibleCards):
                     nextCard += 1
             elif isThereNumber(possibleCards[i].number + j + 1, possibleCards):
                 nextCard += 1
+
         if nextCard == 4:
             return True
         else:
@@ -378,6 +443,7 @@ def flush(possibleCards):
         for j in range(7):
             if possibleCards[i].suit == possibleCards[j].suit:
                 equalSuits += 1
+
         if equalSuits >= 5:
             return True
         else:
@@ -421,6 +487,7 @@ def straightFlush(possibleCards): # VER QUAL É O MAIOR STRAIGHT FLUSH
                     nextCard += 1
             elif isThereCard(possibleCards[i].number + j + 1, currentSuit, possibleCards):
                 nextCard += 1
+
         if nextCard == 4:
             return True
         else:
