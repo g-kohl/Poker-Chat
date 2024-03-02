@@ -55,5 +55,6 @@ pot = 0
 toPayBet = 0
 lookForCard1 = 0
 lookForCard2 = 0
+lookForSuit = ""
 listPlayers = [] # List of Data Class 'Player'
 communityCards = [NULLCARD, NULLCARD, NULLCARD, NULLCARD, NULLCARD] # List of Data Class 'Cards'
