@@ -279,11 +279,14 @@ def calculateHand(player):
         return var.ROYALFLUSH
     elif straightFlush(possibleCards, player):
         return var.STRAIGHTFLUSH
-    elif equalNumber(possibleCards, 4, player):
+    elif equalNumber(possibleCards, 4):
+        getFourOfAKind(possibleCards, player)
         return var.FOUROFAKIND
-    elif fullHouse(possibleCards, player):
+    elif fullHouse(possibleCards):
+        getFullHouse(possibleCards, player)
         return var.FULLHOUSE
-    elif flush(possibleCards, player):
+    elif flush(possibleCards):
+        getFlush(possibleCards, player)
         return var.FLUSH
     elif straight(possibleCards):
         getStraight(possibleCards, player)
@@ -386,10 +389,10 @@ def getStraight(possibleCards, player):
         for j in range(7):
             if var.lookForCard1 - i == 14:
                 if possibleCards[j].number == 1:
-                    var.listPlayers[player].bestHand[i] = possibleCards[j]
+                    var.listPlayers[player].bestHand[4-i] = possibleCards[j]
                     break
             elif var.lookForCard1 - i == possibleCards[j].number:
-                var.listPlayers[player].bestHand[i] = possibleCards[j]
+                var.listPlayers[player].bestHand[4-i] = possibleCards[j]
                 break
     # Gets the best hand (straight): ascending order
             
@@ -404,6 +407,35 @@ def getFlush(possibleCards, player):
             if cardCount == 5:
                 break
     # Gets the best hand (flush): descending order
+            
+def getFullHouse(possibleCards, player):
+    for i in range(7):
+        if possibleCards[i].number == var.lookForCard1:
+            var.listPlayers[player].bestHand[0] = possibleCards[i]
+            var.listPlayers[player].bestHand[1] = possibleCards[i+1]
+            var.listPlayers[player].bestHand[2] = possibleCards[i+2]
+            break
+
+    for i in range(7):
+        if possibleCards[i].number == var.lookForCard2:
+            var.listPlayers[player].bestHand[3] = possibleCards[i]
+            var.listPlayers[player].bestHand[4] = possibleCards[i+1]
+            break
+    # Gets the best hand (full house): Trio1, Trio2, Trio3, Pair1, Pair2
+        
+def getFourOfAKind(possibleCards, player):
+    for i in range(7):
+        if possibleCards[i].number == var.lookForCard1:
+            var.listPlayers[player].bestHand[0] = possibleCards[i]
+            var.listPlayers[player].bestHand[1] = possibleCards[i+1]
+            var.listPlayers[player].bestHand[2] = possibleCards[i+2]
+            var.listPlayers[player].bestHand[3] = possibleCards[i+3]
+            break
+
+    for i in range(7):
+        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
+            var.listPlayers[player].bestHand[4] = possibleCards[len(possibleCards)-1-i]
+    # Gets the best hand (four of a kind): Quad1, Quad2, Quad3, Quad4, Highcard
     
 def equalNumber(possibleCards, occurrence):
     for i in range(7):
@@ -443,36 +475,26 @@ def twoPairs(possibleCards):
     # Returns True if the player has two pairs
 
 def straight(possibleCards):
-    cardCount = 0
-
-    for i in range(1, 6):
-        if isThereNumber(i, possibleCards):
-            cardCount += 1
-
-            if cardCount == 5:
-                var.lookForCard1 = 5
-                return True
-        else:
-            break
-
+    if isThereNumber(var.ACE, possibleCards) and isThereNumber(10, possibleCards) and isThereNumber(var.JACK, possibleCards) and isThereNumber(var.QUEEN, possibleCards) and isThereNumber(var.KING, possibleCards):
+        var.lookForCard1 = 1
+        return True
+    
     for i in range(3):
         cardCount = 0
 
-        if possibleCards[len(possibleCards)-1-i].number == 1:
-            firstStraightCard = 14
-        else:
-            firstStraightCard = possibleCards[len(possibleCards)-1-i].number
+        if possibleCards[len(possibleCards)-1-i].number != 1:
+            lastStraightCard = possibleCards[len(possibleCards)-1-i].number
 
-        for j in range(1, 5):
-            if firstStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
-                cardCount += 1
+            for j in range(1, 5):
+                if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
+                    cardCount += 1
 
-                if cardCount == 4:
-                    var.lookForCard1 = firstStraightCard
-                    return True
-            else:
-                break
-    
+                    if cardCount == 4:
+                        var.lookForCard1 = lastStraightCard
+                        return True
+                else:
+                    break
+        
     return False
     # Returns True if the player has a straight
 
@@ -494,45 +516,24 @@ def flush(possibleCards):
 def fullHouse(possibleCards): #ARRUMAR
     if not equalNumber(possibleCards, 3):
         return False
-
-    equalNumbers = 0
-
+    
     for i in range(7):
-        for j in range(6-i):
-            if possibleCards[i].number == possibleCards[j].number:
-                equalNumbers += 1
-                if equalNumbers == 3:
-                    numberOfTrio = possibleCards[i].number
-                    break
         equalNumbers = 0
 
-    for i in range(7):
-        if possibleCards[i].number == numberOfTrio:
-            possibleCards[i] == var.NULLCARD
+        if possibleCards[i].number != var.lookForCard1:
+            for j in range(7):
+                if possibleCards[i].number == possibleCards[j].number:
+                    equalNumbers += 1
 
-    if equalNumber(possibleCards, 2):
-        return True
-    else: 
-        return False
+                if equalNumbers == 2:
+                    var.lookForCard2 = possibleCards[i].number
+                    return True
 
-def straightFlush(possibleCards): # VER QUAL É O MAIOR STRAIGHT FLUSH
-    nextCard = 0
-
-    for i in range(7):
-        currentSuit = possibleCards[i].suit
-        for j in range(4):
-            if possibleCards[i].number + j + 1 == 14:
-                if isThereCard(var.ACE, currentSuit, possibleCards):
-                    nextCard += 1
-            elif isThereCard(possibleCards[i].number + j + 1, currentSuit, possibleCards):
-                nextCard += 1
-
-        if nextCard == 4:
-            return True
-        else:
-            nextCard = 0
-    
     return False
+    # Returns True if the player has a full house
+
+def straightFlush(possibleCards):
+    return 0
     # Returns True if the player has a straight flush
 
 def royalFlush(possibleCards, player):
