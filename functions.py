@@ -9,7 +9,7 @@ import variables as var
 #=====================
 def initPlayers():
     for i in range(var.playersQuantity):
-        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, []))
+        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
     # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 1 as the value of the hand and a empty list for the best hand
 
 def getCard():
@@ -238,6 +238,12 @@ def showdown():
             print(stringCards(var.listPlayers[i].cards[0].number, var.listPlayers[i].cards[0].suit)
                   + " "
                   + stringCards(var.listPlayers[i].cards[1].number, var.listPlayers[i].cards[1].suit))
+            
+            print(stringCards(var.listPlayers[i].bestHand[0].number, var.listPlayers[i].bestHand[0].suit)
+                  + stringCards(var.listPlayers[i].bestHand[1].number, var.listPlayers[i].bestHand[1].suit)
+                  + stringCards(var.listPlayers[i].bestHand[2].number, var.listPlayers[i].bestHand[2].suit)
+                  + stringCards(var.listPlayers[i].bestHand[3].number, var.listPlayers[i].bestHand[3].suit)
+                  + stringCards(var.listPlayers[i].bestHand[4].number, var.listPlayers[i].bestHand[4].suit))
     # Looks for the player with the best hand
 
 def printHand(player):
@@ -254,13 +260,18 @@ def printHand(player):
         case var.ROYALFLUSH: return "royal flush"
     # Prints the hand
         
+def printBestHand(player):
+    for i in range(5):
+        print(stringCards(var.listPlayers[player].bestHand[i].number, var.listPlayers[player].bestHand[i].suit))
+    # Prints the best hand
+        
 def sortPossibleCards(possibleCards):
     for i in range(1, 7):
         key = possibleCards[i]
         j = i - 1
 
         while j >= 0 and key.number < possibleCards[j].number:
-            possibleCards[j+i] = possibleCards[j]
+            possibleCards[j+1] = possibleCards[j]
             j -= 1
 
         possibleCards[j+1] = key
@@ -277,7 +288,8 @@ def calculateHand(player):
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH
-    elif straightFlush(possibleCards, player):
+    elif straightFlush(possibleCards):
+        getStraightFlush(possibleCards, player)
         return var.STRAIGHTFLUSH
     elif equalNumber(possibleCards, 4):
         getFourOfAKind(possibleCards, player)
@@ -333,14 +345,14 @@ def getPair(possibleCards, player):
             var.listPlayers[player].bestHand[1] = possibleCards[i+1]
             break
 
-    counter = 3
+    counter = 0
 
     for i in range(len(possibleCards)):
         if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
-            var.listPlayers[player].bestHand[2+i] = possibleCards[len(possibleCards)-1-i]
-            counter -= 1
+            var.listPlayers[player].bestHand[2+counter] = possibleCards[len(possibleCards)-1-i]
+            counter += 1
 
-            if counter == 0:
+            if counter == 3:
                 break
     # Gets the best hand (pair): Pair1, Pair2, Highcards in descending order
             
@@ -436,6 +448,19 @@ def getFourOfAKind(possibleCards, player):
         if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
             var.listPlayers[player].bestHand[4] = possibleCards[len(possibleCards)-1-i]
     # Gets the best hand (four of a kind): Quad1, Quad2, Quad3, Quad4, Highcard
+            
+def getStraightFlush(possibleCards, player):
+    for i in range(5):
+        for j in range(7):
+            if possibleCards[j].suit == var.lookForSuit:
+                if var.lookForCard1 - i == 14:
+                    if possibleCards[j].number == 1:
+                        var.listPlayers[player].bestHand[4-i] = possibleCards[j]
+                        break
+                elif var.lookForCard1 - i == possibleCards[j].number:
+                    var.listPlayers[player].bestHand[4-i] = possibleCards[j]
+                    break
+    # Gets the best hand (straight flush): ascending order
     
 def equalNumber(possibleCards, occurrence):
     for i in range(7):
@@ -513,7 +538,7 @@ def flush(possibleCards):
     return False
     # Returns True if the player has a flush
 
-def fullHouse(possibleCards): #ARRUMAR
+def fullHouse(possibleCards):
     if not equalNumber(possibleCards, 3):
         return False
     
@@ -533,7 +558,30 @@ def fullHouse(possibleCards): #ARRUMAR
     # Returns True if the player has a full house
 
 def straightFlush(possibleCards):
-    return 0
+    if not flush(possibleCards):
+        return False
+    
+    if isThereCard(var.ACE, var.lookForSuit, possibleCards) and isThereCard(10, var.lookForSuit, possibleCards) and isThereCard(var.JACK, var.lookForSuit, possibleCards) and isThereCard(var.QUEEN, var.lookForSuit, possibleCards) and isThereCard(var.KING, var.lookForSuit, possibleCards):
+        var.lookForCard1 = 1
+        return True
+    
+    for i in range(3):
+        cardCount = 0
+
+        if possibleCards[len(possibleCards)-1-i].number != 1 and possibleCards[len(possibleCards)-1-i].suit == var.lookForSuit:
+            lastStraightCard = possibleCards[len(possibleCards)-1-i].number
+
+            for j in range(1, 5):
+                if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
+                    cardCount += 1
+
+                    if cardCount == 4:
+                        var.lookForCard1 = lastStraightCard
+                        return True
+                else:
+                    break
+        
+    return False
     # Returns True if the player has a straight flush
 
 def royalFlush(possibleCards, player):

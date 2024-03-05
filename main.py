@@ -62,7 +62,6 @@ print(f.stringCards(var.communityCards[0].number, var.communityCards[0].suit)
       + f.stringCards(var.communityCards[2].number, var.communityCards[2].suit))
 
 f.emptyCurrentBet()
-#var.currentPlayer = var.dealer + 1
 var.currentPlayer = f.nextPlayer(var.dealer)
 
 f.bettingRound()
@@ -77,7 +76,7 @@ print("The turn is:")
 print(f.stringCards(var.communityCards[3].number, var.communityCards[3].suit))
 
 f.emptyCurrentBet()
-var.currentPlayer = var.dealer + 1
+var.currentPlayer = f.nextPlayer(var.dealer)
 
 f.bettingRound()
 
@@ -91,7 +90,7 @@ print("The river is:")
 print(f.stringCards(var.communityCards[4].number, var.communityCards[4].suit))
 
 f.emptyCurrentBet()
-var.currentPlayer = var.dealer + 1
+var.currentPlayer = f.nextPlayer(var.dealer)
 
 f.bettingRound()
 
