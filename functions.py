@@ -9,8 +9,8 @@ import variables as var
 #=====================
 def initPlayers():
     for i in range(var.playersQuantity):
-        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
-    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 1 as the value of the hand and a empty list for the best hand
+        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, 0, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
+    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 1 as the value of the hand, 0 as tiebreak points and a empty list for the best hand
 
 def getCard():
     while True:
@@ -77,6 +77,11 @@ def showPlayerCards(player):
           + stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit))
     # Shows the hand of the current player
 
+def showPossibleCards(possibleCards):
+    for i in range(len(possibleCards)):
+        print(stringCards(possibleCards[i].number, possibleCards[i].suit))
+    # Shows all possible cards of a player
+
 #===================
 # Control the turns:
 #===================
@@ -122,6 +127,9 @@ def countActivePlayers():
 #======================================
 def bettingRound():
     for i in range(var.playersQuantity):
+        if countActivePlayers() <= 1:
+            break
+
         if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].cash > 0:
             playerDecision()
 
@@ -129,6 +137,9 @@ def bettingRound():
     # Every active player makes a decision
 
     while not isEndOfRound():
+        if countActivePlayers() <= 1:
+            break
+
         for i in range(var.playersQuantity):
             if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].currentBet < var.toPayBet and var.listPlayers[var.currentPlayer].cash > 0:
                 playerDecision()
@@ -170,7 +181,7 @@ def playerDecision():
                 isAllIn(var.CALL)
 
         case var.RAISE:
-            if var.listPlayers[var.currentPlayer].cash < var.toPayBet:
+            if var.listPlayers[var.currentPlayer].cash <= var.toPayBet:
                 if var.currentPlayer == var.USER:
                     print("You don't have enough cash to raise")
 
@@ -228,12 +239,14 @@ def showdown():
         if var.listPlayers[i].active and var.listPlayers[i].handValue > bestHand:
             bestHand = var.listPlayers[i].handValue
 
+    tiebreakValue = tiebreak(bestHand)
+
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
-            if var.listPlayers[i].handValue == bestHand:
-                print("player" + str(i+1) + " won!" + " (" + printHand(i) + ")")
+            if var.listPlayers[i].handValue == bestHand and var.listPlayers[i].tiebreakPoints == tiebreakValue:
+                print("player" + str(i+1) + " won!" + " (" + printHand(i) + ")" + " TB: " + str(var.listPlayers[i].tiebreakPoints))
             else:
-                print("player" + str(i+1) + " lost..." + " (" + printHand(i) + ")")
+                print("player" + str(i+1) + " lost..." + " (" + printHand(i) + ")" + " TB: " + str(var.listPlayers[i].tiebreakPoints))
 
             print(stringCards(var.listPlayers[i].cards[0].number, var.listPlayers[i].cards[0].suit)
                   + " "
@@ -245,6 +258,113 @@ def showdown():
                   + stringCards(var.listPlayers[i].bestHand[3].number, var.listPlayers[i].bestHand[3].suit)
                   + stringCards(var.listPlayers[i].bestHand[4].number, var.listPlayers[i].bestHand[4].suit))
     # Looks for the player with the best hand
+
+def tiebreak(bestHand):
+    match bestHand:
+        case var.HIGHCARD:
+            for i in range(5):
+                highestCard = findHighestCard(bestHand, i, i)
+
+                for j in range(var.playersQuantity):
+                    if var.listPlayers[j].tiebreakPoints == i and var.listPlayers[j].bestHand[i].number == highestCard:
+                        var.listPlayers[i].tiebreakPoints = i+1
+
+            return 5
+            
+        case var.PAIR:
+            highestHighPair = findHighestCard(bestHand, 0, 0)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].bestHand[0].number == highestHighPair:
+                    var.listPlayers[i].tiebreakPoints = 1
+
+            for i in range(3):
+                highestCard = findHighestCard(bestHand, i+2, i+1)
+
+                for j in range(var.playersQuantity):
+                    if var.listPlayers[j].tiebreakPoints == i+1 and var.listPlayers[j].bestHand[i+2].number == highestCard:
+                        var.listPlayers[i].tiebreakPoints = i+2
+            
+            return 4
+
+        case var.TWOPAIRS:
+            highestHighPair = findHighestCard(bestHand, 0, 0)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].bestHand[0].number == highestHighPair:
+                    var.listPlayers[i].tiebreakPoints = 1
+
+            highestLowPair = findHighestCard(bestHand, 2, 1)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].tiebreakPoints == 1 and var.listPlayers[i].bestHand[2].number == highestLowPair:
+                    var.listPlayers[i].tiebreakPoints == 2
+
+            highestCard = findHighestCard(bestHand, 4, 2)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].tiebreakPoints == 2 and var.listPlayers[i].bestHand[4].number == highestCard:
+                    var.listPlayers[i].tiebreakPoints == 3
+        
+            return 3
+
+        case var.THREEOFAKIND:
+            highestTrio = findHighestCard(bestHand, 0, 0)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].bestHand[0].number == highestTrio:
+                    var.listPlayers[i].tiebreakPoints = 1
+
+            for i in range(2):
+                highestCard = findHighestCard(bestHand, i+3, i+1)
+
+                for j in range(var.playersQuantity):
+                    if var.listPlayers[j].tiebreakPoints == i+1 and var.listPlayers[j].bestHand[i+3].number == highestCard:
+                        var.listPlayers[j].tiebreakPoints = i+2
+            
+            return 3
+
+        case var.FULLHOUSE:
+            highestTrio = findHighestCard(bestHand, 0, 0)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].bestHand[0].number == highestTrio:
+                    var.listPlayers[i].tiebreakPoints = 1
+
+            highestPair = findHighestCard(bestHand, 3, 1)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].tiebreakPoints == 1 and var.listPlayers[i].bestHand[3].number == highestPair:
+                    var.listPlayers[i].tiebreakPoints
+
+            return 2
+        
+        case var.ROYALFLUSH:
+            return 0
+        
+        case _:
+            highestCard = findHighestCard(bestHand, 0, 0)
+
+            for i in range(var.playersQuantity):
+                if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].bestHand[0].number == highestCard:
+                    var.listPlayers[i].tiebreakPoints = 1
+
+            return 1
+    # Tiebreak
+
+def findHighestCard(bestHand, index, tiebreakValue):
+    highestCard = 0
+
+    for i in range(var.playersQuantity):
+        if var.listPlayers[i].active and var.listPlayers[i].handValue == bestHand and var.listPlayers[i].tiebreakPoints == tiebreakValue:
+            if var.listPlayers[i].bestHand[index].number == var.ACE:
+                highestCard = var.ACE
+                break
+            elif var.listPlayers[i].bestHand[index].number > highestCard:
+                highestCard = var.listPlayers[i].bestHand[index].number
+    
+    return highestCard
+    # Finds the highest "index-th" card from the players with the best hand and best current tiebreak points
 
 def printHand(player):
     match var.listPlayers[player].handValue:
@@ -277,7 +397,7 @@ def sortPossibleCards(possibleCards):
         possibleCards[j+1] = key
 
     for i in range(7):
-        if possibleCards[i] == 1:
+        if possibleCards[i].number == 1:
             possibleCards.append(possibleCards[i])
     
     return possibleCards
@@ -285,6 +405,8 @@ def sortPossibleCards(possibleCards):
 
 def calculateHand(player):
     possibleCards = sortPossibleCards([var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]])
+    print("Possible cards of player %d:" % (player+1))
+    showPossibleCards(possibleCards)
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH
@@ -360,6 +482,9 @@ def getTwoPairs(possibleCards, player):
     highPair = max([var.lookForCard1, var.lookForCard2])
     lowPair = min([var.lookForCard1, var.lookForCard2])
 
+    if lowPair == 1:
+        highPair, lowPair = lowPair, highPair
+
     for i in range(7):
         if possibleCards[i].number == highPair:
             var.listPlayers[player].bestHand[0] = possibleCards[i]
@@ -369,12 +494,13 @@ def getTwoPairs(possibleCards, player):
     for i in range(7):
         if possibleCards[i].number == lowPair:
             var.listPlayers[player].bestHand[2] = possibleCards[i]
-            var.listPlayers[player].bestHand[3] = possibleCards[i]
+            var.listPlayers[player].bestHand[3] = possibleCards[i+1]
             break
 
     for i in range(7):
-        if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1 and possibleCards[len(possibleCards)-1-i].number != var.lookForCard2:
+        if possibleCards[len(possibleCards)-1-i].number != highPair and possibleCards[len(possibleCards)-1-i].number != lowPair:
             var.listPlayers[player].bestHand[4] = possibleCards[len(possibleCards)-1-i]
+            break
     # Gets the best hand (two pairs): HighPair1, HighPair2, LowPair1, LowPair2, Highcard
             
 def getThreeOfAKind(possibleCards, player):
@@ -385,14 +511,14 @@ def getThreeOfAKind(possibleCards, player):
             var.listPlayers[player].bestHand[2] = possibleCards[i+2]
             break
 
-    counter = 2
+    counter = 0
 
     for i in range(len(possibleCards)):
         if possibleCards[len(possibleCards)-1-i].number != var.lookForCard1:
-            var.listPlayers[player].bestHand[3+i] = possibleCards[len(possibleCards)-1-i]
-            counter -= 1
+            var.listPlayers[player].bestHand[3+counter] = possibleCards[len(possibleCards)-1-i]
+            counter += 1
 
-            if counter == 0:
+            if counter == 2:
                 break
     # Gets the best hand (three of a kind): Trio1, Trio2, Trio3, highcards in descending order
             
@@ -413,7 +539,7 @@ def getFlush(possibleCards, player):
 
     for i in range(7):
         if possibleCards[len(possibleCards)-1-i].suit == var.lookForSuit:
-            var.listPlayers[player].bestHand[i] = possibleCards[len(possibleCards)-1-i]
+            var.listPlayers[player].bestHand[cardCount] = possibleCards[len(possibleCards)-1-i]
             cardCount += 1
 
             if cardCount == 5:
@@ -484,11 +610,11 @@ def twoPairs(possibleCards):
 
     for i in range(7):
         for j in range(7-i):
-            if possibleCards[i].number == possibleCards[6-j].number and possibleCards[i].suit != possibleCards[6-j].suit:
+            if possibleCards[len(possibleCards)-1-i].number == possibleCards[len(possibleCards)-1-i-j].number and possibleCards[len(possibleCards)-1-i].suit != possibleCards[len(possibleCards)-1-i-j].suit:
                 if var.lookForCard1 == 0:
-                    var.lookForCard1 = possibleCards[i].number
+                    var.lookForCard1 = possibleCards[len(possibleCards)-1-i].number
                 else:
-                    var.lookForCard2 = possibleCards[i].number
+                    var.lookForCard2 = possibleCards[len(possibleCards)-1-i].number
 
                 pairs += 1
                 break
@@ -510,15 +636,21 @@ def straight(possibleCards):
         if possibleCards[len(possibleCards)-1-i].number != 1:
             lastStraightCard = possibleCards[len(possibleCards)-1-i].number
 
-            for j in range(1, 5):
-                if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
-                    cardCount += 1
+            j = counter = 1
+            while counter < 5:
+                if possibleCards[len(possibleCards)-1-i-j].number != possibleCards[len(possibleCards)-2-i-j].number:
+                    counter += 1
 
-                    if cardCount == 4:
-                        var.lookForCard1 = lastStraightCard
-                        return True
-                else:
-                    break
+                    if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
+                        cardCount += 1
+
+                        if cardCount == 4:
+                            var.lookForCard1 = lastStraightCard
+                            return True
+                    else:
+                        break
+                
+                j += 1
         
     return False
     # Returns True if the player has a straight
@@ -571,15 +703,21 @@ def straightFlush(possibleCards):
         if possibleCards[len(possibleCards)-1-i].number != 1 and possibleCards[len(possibleCards)-1-i].suit == var.lookForSuit:
             lastStraightCard = possibleCards[len(possibleCards)-1-i].number
 
-            for j in range(1, 5):
-                if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
-                    cardCount += 1
+            j = counter = 1
+            while counter < 5:
+                if possibleCards[len(possibleCards)-1-i-j].number != possibleCards[len(possibleCards)-2-i-j].number:
+                    counter += 1
 
-                    if cardCount == 4:
-                        var.lookForCard1 = lastStraightCard
-                        return True
-                else:
-                    break
+                    if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
+                        cardCount += 1
+
+                        if cardCount == 4:
+                            var.lookForCard1 = lastStraightCard
+                            return True
+                    else:
+                        break
+                
+                j += 1
         
     return False
     # Returns True if the player has a straight flush

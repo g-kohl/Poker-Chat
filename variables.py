@@ -15,6 +15,7 @@ class Player:
     active: bool
     currentBet: int
     handValue: int
+    tiebreakPoints: int
     bestHand: [] # List of Data Class 'Cards'
 
 # Constants:
