@@ -261,7 +261,7 @@ def showdown():
 
 def tiebreak(bestHand):
     match bestHand:
-        case var.HIGHCARD:
+        case var.HIGHCARD | var.FLUSH:
             for i in range(5):
                 highestCard = findHighestCard(bestHand, i, i)
 
@@ -342,7 +342,7 @@ def tiebreak(bestHand):
         case var.ROYALFLUSH:
             return 0
         
-        case _:
+        case _: # Straight, Straight Flush or Four Of A Kind
             highestCard = findHighestCard(bestHand, 0, 0)
 
             for i in range(var.playersQuantity):
