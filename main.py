@@ -9,7 +9,6 @@ import functions as f
 #==========
 # Pre-Game:
 #==========
-print("2")
 var.playersQuantity = int(input("How many players(2-10)?"))
 var.toPayBet = var.minimalBet = int(input("How much will be the minimal bet?"))
 var.dealer = var.currentPlayer = random.randrange(0, var.playersQuantity)
@@ -100,5 +99,4 @@ print("The pot has " + str(var.pot) + " chips")
 #==========
 # Showdown:
 #==========
-if f.countActivePlayers() > 1:
-    f.showdown()
+f.showdown()

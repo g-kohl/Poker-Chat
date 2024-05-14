@@ -9,8 +9,8 @@ import variables as var
 #=====================
 def initPlayers():
     for i in range(var.playersQuantity):
-        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 1, 0, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
-    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 1 as the value of the hand, 0 as tiebreak points and a empty list for the best hand
+        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 0, 0, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
+    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 0 as the value of the hand, 0 as tiebreak points and a empty list for the best hand
 
 def getCard():
     while True:
@@ -127,7 +127,7 @@ def countActivePlayers():
 #======================================
 def bettingRound():
     for i in range(var.playersQuantity):
-        if countActivePlayers() <= 1:
+        if countActivePlayers() == 1:
             break
 
         if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].cash > 0:
@@ -240,6 +240,8 @@ def showdown():
             bestHand = var.listPlayers[i].handValue
 
     tiebreakValue = tiebreak(bestHand)
+    print("Best hand: " + str(bestHand))
+    print("TB: " + str(tiebreakValue))
 
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
@@ -267,7 +269,7 @@ def tiebreak(bestHand):
 
                 for j in range(var.playersQuantity):
                     if var.listPlayers[j].tiebreakPoints == i and var.listPlayers[j].bestHand[i].number == highestCard:
-                        var.listPlayers[i].tiebreakPoints = i+1
+                        var.listPlayers[j].tiebreakPoints = i+1
 
             return 5
             
@@ -283,7 +285,7 @@ def tiebreak(bestHand):
 
                 for j in range(var.playersQuantity):
                     if var.listPlayers[j].tiebreakPoints == i+1 and var.listPlayers[j].bestHand[i+2].number == highestCard:
-                        var.listPlayers[i].tiebreakPoints = i+2
+                        var.listPlayers[j].tiebreakPoints = i+2
             
             return 4
 
@@ -298,13 +300,13 @@ def tiebreak(bestHand):
 
             for i in range(var.playersQuantity):
                 if var.listPlayers[i].tiebreakPoints == 1 and var.listPlayers[i].bestHand[2].number == highestLowPair:
-                    var.listPlayers[i].tiebreakPoints == 2
+                    var.listPlayers[i].tiebreakPoints = 2
 
             highestCard = findHighestCard(bestHand, 4, 2)
 
             for i in range(var.playersQuantity):
                 if var.listPlayers[i].tiebreakPoints == 2 and var.listPlayers[i].bestHand[4].number == highestCard:
-                    var.listPlayers[i].tiebreakPoints == 3
+                    var.listPlayers[i].tiebreakPoints = 3
         
             return 3
 
@@ -335,7 +337,7 @@ def tiebreak(bestHand):
 
             for i in range(var.playersQuantity):
                 if var.listPlayers[i].tiebreakPoints == 1 and var.listPlayers[i].bestHand[3].number == highestPair:
-                    var.listPlayers[i].tiebreakPoints
+                    var.listPlayers[i].tiebreakPoints = 2
 
             return 2
         
@@ -641,7 +643,7 @@ def straight(possibleCards):
                 if possibleCards[len(possibleCards)-1-i-j].number != possibleCards[len(possibleCards)-2-i-j].number:
                     counter += 1
 
-                    if lastStraightCard - j == possibleCards[len(possibleCards)-1-i-j].number:
+                    if lastStraightCard - counter == possibleCards[len(possibleCards)-1-i-j].number:
                         cardCount += 1
 
                         if cardCount == 4:
