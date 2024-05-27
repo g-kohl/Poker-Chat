@@ -1,5 +1,6 @@
 # Libraries:
 import random
+import time
 
 # Modules:
 import variables as var
@@ -68,13 +69,12 @@ def stringCards(cardNumber, cardSuit):
 
 def showPlayerCards(player):
     if player == var.USER:
-        print("Your cards are: ")
+        print("Your cards are: %s %s" % (stringCards(var.listPlayers[player].cards[0].number, var.listPlayers[player].cards[0].suit),
+                                         stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit)))
     else:
-        print("Player" + str(player+1) + "'s are: ")
-
-    print(stringCards(var.listPlayers[player].cards[0].number, var.listPlayers[player].cards[0].suit) 
-          + " " 
-          + stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit))
+        print("%s's are: %s %s" % (var.listPlayers[player].name,
+                                         stringCards(var.listPlayers[player].cards[0].number, var.listPlayers[player].cards[0].suit),
+                                         stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit)))
     # Shows the hand of the current player
 
 def showPossibleCards(possibleCards):
@@ -89,9 +89,9 @@ def nextPlayer(player):
     player += 1
 
     if player >= var.playersQuantity:
-        return player - var.playersQuantity
-    else:
-        return player
+        player -= var.playersQuantity
+    
+    return player
     # Gets the number of the next player of the table
 
 def previousPlayer(player):
@@ -121,6 +121,30 @@ def countActivePlayers():
             activePlayers += 1
 
     return activePlayers
+
+def prepareNextHand():
+    var.pot = 0
+    var.toPayBet = var.minimalBet
+    var.communityCards = [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]
+
+    for i in range(var.playersQuantity):
+        var.listPlayers[i].cards = [var.NULLCARD, var.NULLCARD]
+        var.listPlayers[i].currentBet = 0
+        var.listPlayers[i].handValue = 0
+        var.listPlayers[i].tiebreakPoints = 0
+        var.listPlayers[i].bestHand = [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]
+
+        if var.listPlayers[i].cash > 0:
+            var.listPlayers[i].active = True
+        else:
+            var.listPlayers[i].active = False
+
+    nextP = nextPlayer(var.dealer)
+    while not var.listPlayers[nextP].active:
+        nextP = nextPlayer(var.dealer)
+
+    var.dealer = var.currentPlayer = nextP
+    # Prepare configurations for the next hand
 
 #======================================
 # Control the decisions of the players:
@@ -159,7 +183,8 @@ def playerDecision():
 
     match decision:
         case var.FOLD:
-            print("Player" + str(var.currentPlayer+1) + " folds")
+            sleep()
+            print("%s folds" % var.listPlayers[var.currentPlayer].name)
             fold()
             
         case var.CHECK:
@@ -169,10 +194,11 @@ def playerDecision():
 
                 playerDecision()
             else:
-                print("Player" + str(var.currentPlayer+1) + " checks")
+                sleep()
+                print("%s checks" % var.listPlayers[var.currentPlayer].name)
 
         case var.CALL:
-            if var.toPayBet == 0:
+            if var.toPayBet == 0 or var.toPayBet == var.listPlayers[var.currentPlayer].currentBet:
                 if var.currentPlayer == var.USER:
                     print("There is nothing to call, you can fold, check or raise")
 
@@ -197,15 +223,18 @@ def isAllIn(decision):
         var.listPlayers[var.currentPlayer].currentBet = var.toPayBet
 
         if decision == var.CALL:
-            print("Player" + str(var.currentPlayer+1) + " calls")
+            sleep()
+            print("%s calls" % var.listPlayers[var.currentPlayer].name)
         elif decision == var.RAISE:
-            print("Player" + str(var.currentPlayer+1) + " raises to " + str(var.toPayBet))
+            sleep()
+            print("%s raises to %d" % (var.listPlayers[var.currentPlayer].name, var.toPayBet))
     else:
         allIn()
     # Verifies if is an "all in" situation. If it isn't, just pays the bet
 
 def allIn():
-    print("Player" + str(var.currentPlayer+1) + " goes all in!")
+    sleep()
+    print("%s goes all in!" % var.listPlayers[var.currentPlayer].name)
     var.pot += var.listPlayers[var.currentPlayer].cash
     var.listPlayers[var.currentPlayer].currentBet += var.listPlayers[var.currentPlayer].cash
     var.listPlayers[var.currentPlayer].cash = 0
@@ -226,10 +255,15 @@ def raiseBet():
     # If it is the user turn, asks how much will be the raise
     # If it isn't, generate a random number that will be the raise
 
+def sleep():
+    time.sleep(1.5)
+
 #=====================
 # Control the results:
 #=====================
 def showdown():
+    winners = []
+
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
             var.listPlayers[i].handValue = calculateHand(i)
@@ -240,26 +274,36 @@ def showdown():
             bestHand = var.listPlayers[i].handValue
 
     tiebreakValue = tiebreak(bestHand)
-    print("Best hand: " + str(bestHand))
-    print("TB: " + str(tiebreakValue))
+    print("Best hand: %d" % bestHand)
+    print("TB: %d" % tiebreakValue)
 
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active:
             if var.listPlayers[i].handValue == bestHand and var.listPlayers[i].tiebreakPoints == tiebreakValue:
-                print("player" + str(i+1) + " won!" + " (" + printHand(i) + ")" + " TB: " + str(var.listPlayers[i].tiebreakPoints))
+                print("%s won! (%s) TB: %d" % (var.listPlayers[i].name, printHand(i), var.listPlayers[i].tiebreakPoints))
+                winners.append(i)
             else:
-                print("player" + str(i+1) + " lost..." + " (" + printHand(i) + ")" + " TB: " + str(var.listPlayers[i].tiebreakPoints))
-
-            print(stringCards(var.listPlayers[i].cards[0].number, var.listPlayers[i].cards[0].suit)
-                  + " "
-                  + stringCards(var.listPlayers[i].cards[1].number, var.listPlayers[i].cards[1].suit))
+                print("%s lost... (%s) TB: %d" % (var.listPlayers[i].name, printHand(i), var.listPlayers[i].tiebreakPoints))
             
-            print(stringCards(var.listPlayers[i].bestHand[0].number, var.listPlayers[i].bestHand[0].suit)
-                  + stringCards(var.listPlayers[i].bestHand[1].number, var.listPlayers[i].bestHand[1].suit)
-                  + stringCards(var.listPlayers[i].bestHand[2].number, var.listPlayers[i].bestHand[2].suit)
-                  + stringCards(var.listPlayers[i].bestHand[3].number, var.listPlayers[i].bestHand[3].suit)
-                  + stringCards(var.listPlayers[i].bestHand[4].number, var.listPlayers[i].bestHand[4].suit))
-    # Looks for the player with the best hand
+            print("%s %s" % (stringCards(var.listPlayers[i].cards[0].number, var.listPlayers[i].cards[0].suit),
+                             stringCards(var.listPlayers[i].cards[1].number, var.listPlayers[i].cards[1].suit)))
+            
+            print("%s %s %s %s %s" % (stringCards(var.listPlayers[i].bestHand[0].number, var.listPlayers[i].bestHand[0].suit),
+                                      stringCards(var.listPlayers[i].bestHand[1].number, var.listPlayers[i].bestHand[1].suit),
+                                      stringCards(var.listPlayers[i].bestHand[2].number, var.listPlayers[i].bestHand[2].suit),
+                                      stringCards(var.listPlayers[i].bestHand[3].number, var.listPlayers[i].bestHand[3].suit),
+                                      stringCards(var.listPlayers[i].bestHand[4].number, var.listPlayers[i].bestHand[4].suit)))
+            
+    return winners
+    # Looks for the player with the best hand and returns a list of the winners
+
+def distributePot(winners):
+    value = var.pot / len(winners)
+
+    for i in range(len(winners)):
+        var.listPlayers[winners[i]].cash += value
+        print("%s received: %d chips" % (var.listPlayers[winners[i]].name, value))
+    # Distributes the money among the winners
 
 def tiebreak(bestHand):
     match bestHand:
@@ -407,7 +451,7 @@ def sortPossibleCards(possibleCards):
 
 def calculateHand(player):
     possibleCards = sortPossibleCards([var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]])
-    print("Possible cards of player %d:" % (player+1))
+    print("Possible cards of %s:" % var.listPlayers[player].name)
     showPossibleCards(possibleCards)
 
     if royalFlush(possibleCards, player):
