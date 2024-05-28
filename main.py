@@ -36,17 +36,31 @@ while f.countActivePlayers() > 1:
 
     f.sleep()
     var.currentPlayer = f.nextPlayer(var.currentPlayer)
-    print("%s is the small blind and bets %d chip(s)" % (var.listPlayers[var.currentPlayer].name, int(var.minimalBet/2)))
-    var.listPlayers[var.currentPlayer].cash -= int(var.minimalBet/2)
-    var.listPlayers[var.currentPlayer].currentBet += int(var.minimalBet/2)
+
+    if var.listPlayers[var.currentPlayer].cash <= int(var.minimalBet/2):
+        var.listPlayers[var.currentPlayer].currentBet = var.listPlayers[var.currentPlayer].cash
+        var.pot += var.listPlayers[var.currentPlayer].cash
+        var.listPlayers[var.currentPlayer].cash = 0
+        print("%s is the small blind and goes all in (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
+    else:
+        var.listPlayers[var.currentPlayer].cash -= int(var.minimalBet/2)
+        var.listPlayers[var.currentPlayer].currentBet += int(var.minimalBet/2)
+        var.pot += int(var.minimalBet/2)
+        print("%s is the small blind and bets %d chip(s) (cash: %d)" % (var.listPlayers[var.currentPlayer].name, int(var.minimalBet/2), var.listPlayers[var.currentPlayer].cash))
 
     f.sleep()
     var.currentPlayer = f.nextPlayer(var.currentPlayer)
-    print("%s is the big blind and bets %d chips" % (var.listPlayers[var.currentPlayer].name, var.minimalBet))
-    var.listPlayers[var.currentPlayer].cash -= var.minimalBet
-    var.listPlayers[var.currentPlayer].currentBet += var.minimalBet
 
-    var.pot += int((3*var.minimalBet)/2)
+    if var.listPlayers[var.currentPlayer].cash <= var.minimalBet:
+        var.listPlayers[var.currentPlayer].currentBet = var.listPlayers[var.currentPlayer].cash
+        var.pot += var.listPlayers[var.currentPlayer].cash
+        var.listPlayers[var.currentPlayer].cash = 0
+        print("%s is the small blind and goes all in (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
+    else:
+        var.listPlayers[var.currentPlayer].cash -= var.minimalBet
+        var.listPlayers[var.currentPlayer].currentBet += var.minimalBet
+        var.pot += var.minimalBet
+        print("%s is the big blind and bets %d chip(s) (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.minimalBet, var.listPlayers[var.currentPlayer].cash))
 
     firstOfRound = var.currentPlayer = f.nextPlayer(var.currentPlayer)
     lastOfRound = f.previousPlayer(var.currentPlayer)
@@ -107,9 +121,10 @@ while f.countActivePlayers() > 1:
     f.sleep()
     winners = f.showdown()
     f.distributePot(winners)
-    f.prepareNextHand()
 
-    print("Next Hand...\n")
+    if not f.isEndOfGame():
+        f.prepareNextHand()
+        print("Next Hand...\n")
 
 for i in range(var.playersQuantity):
     if var.listPlayers[i].active:

@@ -113,11 +113,24 @@ def isEndOfRound():
     return flag
     # Returns false if it finds a player the still have to bet/pay, and true if that isn't the case
 
+def isEndOfGame():
+    count = 0
+
+    for i in range(var.playersQuantity):
+        if var.listPlayers[i].cash > 0:
+            count += 1
+
+    if count == 1:
+        return True
+
+    return False
+    # Returns true if the game ended
+
 def countActivePlayers():
     activePlayers = 0
 
     for i in range(var.playersQuantity):
-        if var.listPlayers[i].active:
+        if var.listPlayers[i].active and var.listPlayers[i].cash > 0:
             activePlayers += 1
 
     return activePlayers
@@ -151,7 +164,7 @@ def prepareNextHand():
 #======================================
 def bettingRound():
     for i in range(var.playersQuantity):
-        if countActivePlayers() == 1:
+        if countActivePlayers() <= 1 and isEndOfRound():
             break
 
         if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].cash > 0:
@@ -184,7 +197,7 @@ def playerDecision():
     match decision:
         case var.FOLD:
             sleep()
-            print("%s folds" % var.listPlayers[var.currentPlayer].name)
+            print("%s folds (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
             fold()
             
         case var.CHECK:
@@ -195,7 +208,7 @@ def playerDecision():
                 playerDecision()
             else:
                 sleep()
-                print("%s checks" % var.listPlayers[var.currentPlayer].name)
+                print("%s checks (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
 
         case var.CALL:
             if var.toPayBet == 0 or var.toPayBet == var.listPlayers[var.currentPlayer].currentBet:
@@ -224,20 +237,20 @@ def isAllIn(decision):
 
         if decision == var.CALL:
             sleep()
-            print("%s calls" % var.listPlayers[var.currentPlayer].name)
+            print("%s calls (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
         elif decision == var.RAISE:
             sleep()
-            print("%s raises to %d" % (var.listPlayers[var.currentPlayer].name, var.toPayBet))
+            print("%s raises to %d (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.toPayBet, var.listPlayers[var.currentPlayer].cash))
     else:
         allIn()
     # Verifies if is an "all in" situation. If it isn't, just pays the bet
 
 def allIn():
     sleep()
-    print("%s goes all in!" % var.listPlayers[var.currentPlayer].name)
     var.pot += var.listPlayers[var.currentPlayer].cash
     var.listPlayers[var.currentPlayer].currentBet += var.listPlayers[var.currentPlayer].cash
     var.listPlayers[var.currentPlayer].cash = 0
+    print("%s goes all in! (cash: %d)" % (var.listPlayers[var.currentPlayer].name, var.listPlayers[var.currentPlayer].cash))
     # Prints the "all in" message and empties the player's cash
 
 def fold():
@@ -451,8 +464,8 @@ def sortPossibleCards(possibleCards):
 
 def calculateHand(player):
     possibleCards = sortPossibleCards([var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]])
-    print("Possible cards of %s:" % var.listPlayers[player].name)
-    showPossibleCards(possibleCards)
+    # print("Possible cards of %s:" % var.listPlayers[player].name)
+    # showPossibleCards(possibleCards)
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH
@@ -676,28 +689,22 @@ def straight(possibleCards):
         var.lookForCard1 = 1
         return True
     
-    for i in range(3):
-        cardCount = 0
+    counter = 0
+    i = len(possibleCards) - 1
+    while counter < 3:
+        if possibleCards[i].number != var.ACE:
+            if (isThereNumber(possibleCards[i].number-1, possibleCards) and 
+                isThereNumber(possibleCards[i].number-2, possibleCards) and
+                isThereNumber(possibleCards[i].number-3, possibleCards) and
+                isThereNumber(possibleCards[i].number-4, possibleCards)):
 
-        if possibleCards[len(possibleCards)-1-i].number != 1:
-            lastStraightCard = possibleCards[len(possibleCards)-1-i].number
+                var.lookForCard1 = possibleCards[i].number
+                return True
+            
+            counter += 1
 
-            j = counter = 1
-            while counter < 5:
-                if possibleCards[len(possibleCards)-1-i-j].number != possibleCards[len(possibleCards)-2-i-j].number:
-                    counter += 1
+        i -= 1
 
-                    if lastStraightCard - counter == possibleCards[len(possibleCards)-1-i-j].number:
-                        cardCount += 1
-
-                        if cardCount == 4:
-                            var.lookForCard1 = lastStraightCard
-                            return True
-                    else:
-                        break
-                
-                j += 1
-        
     return False
     # Returns True if the player has a straight
 
