@@ -10,8 +10,8 @@ import variables as var
 #=====================
 def initPlayers():
     for i in range(var.playersQuantity):
-        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], 20*var.minimalBet, True, 0, 0, 0, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
-    # Initializes the list of players with a standard name, null cards, 20 times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 0 as the value of the hand, 0 as tiebreak points and a empty list for the best hand
+        var.listPlayers.append(var.Player("player" + str(i+1), [var.NULLCARD, var.NULLCARD], var.bbQuant*var.minimalBet, True, 0, 0, 0, [var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD, var.NULLCARD]))
+    # Initializes the list of players with a standard name, null cards, var.bbQuant times the minimal bet as cash, a boolean indicating the activity of the player, 0 as the current bet, 0 as the value of the hand, 0 as tiebreak points and a empty list for the best hand
 
 def getCard():
     while True:
@@ -72,7 +72,7 @@ def showPlayerCards(player):
         print("Your cards are: %s %s" % (stringCards(var.listPlayers[player].cards[0].number, var.listPlayers[player].cards[0].suit),
                                          stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit)))
     else:
-        print("%s's are: %s %s" % (var.listPlayers[player].name,
+        print("%s's cards are: %s %s" % (var.listPlayers[player].name,
                                          stringCards(var.listPlayers[player].cards[0].number, var.listPlayers[player].cards[0].suit),
                                          stringCards(var.listPlayers[player].cards[1].number, var.listPlayers[player].cards[1].suit)))
     # Shows the hand of the current player
@@ -109,6 +109,7 @@ def isEndOfRound():
     for i in range(var.playersQuantity):
         if var.listPlayers[i].active and var.listPlayers[i].currentBet < var.toPayBet and var.listPlayers[i].cash > 0:
             flag = False
+            # print("%s have to play" % var.listPlayers[i].name)
 
     return flag
     # Returns false if it finds a player the still have to bet/pay, and true if that isn't the case
@@ -154,7 +155,7 @@ def prepareNextHand():
 
     nextP = nextPlayer(var.dealer)
     while not var.listPlayers[nextP].active:
-        nextP = nextPlayer(var.dealer)
+        nextP = nextPlayer(nextP)
 
     var.dealer = var.currentPlayer = nextP
     # Prepare configurations for the next hand
@@ -165,6 +166,7 @@ def prepareNextHand():
 def bettingRound():
     for i in range(var.playersQuantity):
         if countActivePlayers() <= 1 and isEndOfRound():
+            # print("quitei")
             break
 
         if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].cash > 0:
@@ -174,8 +176,8 @@ def bettingRound():
     # Every active player makes a decision
 
     while not isEndOfRound():
-        if countActivePlayers() <= 1:
-            break
+        # if countActivePlayers() <= 1:
+        #     break
 
         for i in range(var.playersQuantity):
             if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].currentBet < var.toPayBet and var.listPlayers[var.currentPlayer].cash > 0:

@@ -50,6 +50,7 @@ suits = ["♦", "♣", "♥", "♠"]
 # Global Variables:
 playersQuantity = 0
 minimalBet = 0
+bbQuant = 0
 currentPlayer = 0
 dealer = 0
 pot = 0

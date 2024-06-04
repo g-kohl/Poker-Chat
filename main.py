@@ -11,9 +11,10 @@ import functions as f
 #==========
 var.playersQuantity = int(input("How many players(2-10)?"))
 var.toPayBet = var.minimalBet = int(input("How much will be the minimal bet?"))
+var.bbQuant = int(input("How many big blinds as starting cash?"))
 var.dealer = var.currentPlayer = random.randrange(0, var.playersQuantity)
 
-print("You're player number 1")
+print("You're player1")
 
 f.initPlayers()
 
@@ -31,11 +32,16 @@ while f.countActivePlayers() > 1:
     f.sleep()
     print("The dealer is %s" % var.listPlayers[var.dealer].name)
 
-    f.sleep()
-    f.showPlayerCards(var.USER)
+    if var.listPlayers[var.USER].active:
+        f.sleep()
+        f.showPlayerCards(var.USER)
 
     f.sleep()
-    var.currentPlayer = f.nextPlayer(var.currentPlayer)
+    nextP = f.nextPlayer(var.currentPlayer)
+    while not var.listPlayers[nextP].active:
+        nextP = f.nextPlayer(nextP)
+
+    var.currentPlayer = nextP
 
     if var.listPlayers[var.currentPlayer].cash <= int(var.minimalBet/2):
         var.listPlayers[var.currentPlayer].currentBet = var.listPlayers[var.currentPlayer].cash
@@ -49,7 +55,11 @@ while f.countActivePlayers() > 1:
         print("%s is the small blind and bets %d chip(s) (cash: %d)" % (var.listPlayers[var.currentPlayer].name, int(var.minimalBet/2), var.listPlayers[var.currentPlayer].cash))
 
     f.sleep()
-    var.currentPlayer = f.nextPlayer(var.currentPlayer)
+    nextP = f.nextPlayer(var.currentPlayer)
+    while not var.listPlayers[nextP].active:
+        nextP = f.nextPlayer(nextP)
+
+    var.currentPlayer = nextP
 
     if var.listPlayers[var.currentPlayer].cash <= var.minimalBet:
         var.listPlayers[var.currentPlayer].currentBet = var.listPlayers[var.currentPlayer].cash
