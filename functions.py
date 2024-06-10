@@ -135,6 +135,7 @@ def countActivePlayers():
             activePlayers += 1
 
     return activePlayers
+    # Returns the number of active players that still have cash
 
 def prepareNextHand():
     var.pot = 0
@@ -166,7 +167,6 @@ def prepareNextHand():
 def bettingRound():
     for i in range(var.playersQuantity):
         if countActivePlayers() <= 1 and isEndOfRound():
-            # print("quitei")
             break
 
         if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].cash > 0:
@@ -176,9 +176,6 @@ def bettingRound():
     # Every active player makes a decision
 
     while not isEndOfRound():
-        # if countActivePlayers() <= 1:
-        #     break
-
         for i in range(var.playersQuantity):
             if var.listPlayers[var.currentPlayer].active and var.listPlayers[var.currentPlayer].currentBet < var.toPayBet and var.listPlayers[var.currentPlayer].cash > 0:
                 playerDecision()
@@ -466,8 +463,6 @@ def sortPossibleCards(possibleCards):
 
 def calculateHand(player):
     possibleCards = sortPossibleCards([var.listPlayers[player].cards[0], var.listPlayers[player].cards[1], var.communityCards[0], var.communityCards[1], var.communityCards[2], var.communityCards[3], var.communityCards[4]])
-    # print("Possible cards of %s:" % var.listPlayers[player].name)
-    # showPossibleCards(possibleCards)
 
     if royalFlush(possibleCards, player):
         return var.ROYALFLUSH

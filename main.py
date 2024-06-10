@@ -22,12 +22,9 @@ while f.countActivePlayers() > 1:
     f.distributeCards()
     f.getCommunityCards()
 
-    # for i in range(var.playersQuantity):
-    #    f.showPlayerCards(i)
-
-    #==========
-    # Pre-Flop:
-    #==========
+#==========
+# Pre-Flop:
+#==========
 
     f.sleep()
     print("The dealer is %s" % var.listPlayers[var.dealer].name)
@@ -81,9 +78,9 @@ while f.countActivePlayers() > 1:
     print("End of Pre-Flop")
     print("The pot has %d chips" % var.pot)
 
-    #======
-    # Flop:
-    #======
+#======
+# Flop:
+#======
     print("The flop is: %s %s %s" % (f.stringCards(var.communityCards[0].number, var.communityCards[0].suit),
                                     f.stringCards(var.communityCards[1].number, var.communityCards[1].suit),
                                     f.stringCards(var.communityCards[2].number, var.communityCards[2].suit)))
@@ -97,9 +94,9 @@ while f.countActivePlayers() > 1:
     print("End of Flop")
     print("The pot has %d chips" % var.pot)
 
-    #======
-    # Turn:
-    #======
+#======
+# Turn:
+#======
     print("The turn is: %s" % f.stringCards(var.communityCards[3].number, var.communityCards[3].suit))
 
     f.emptyCurrentBet()
@@ -111,9 +108,9 @@ while f.countActivePlayers() > 1:
     print("End of Turn")
     print("The pot has %d chips" % var.pot)
 
-    #=======
-    # River:
-    #=======
+#=======
+# River:
+#=======
     print("The river is: %s" % f.stringCards(var.communityCards[4].number, var.communityCards[4].suit))
 
     f.emptyCurrentBet()
@@ -125,9 +122,9 @@ while f.countActivePlayers() > 1:
     print("End of River")
     print("The pot has %d chips" % var.pot)
 
-    #==========
-    # Showdown:
-    #==========
+#==========
+# Showdown:
+#==========
     f.sleep()
     winners = f.showdown()
     f.distributePot(winners)
